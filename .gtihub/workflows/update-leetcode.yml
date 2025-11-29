@@ -1,0 +1,41 @@
+name: Update LeetCode Roadmap
+
+on:
+  schedule:
+    - cron: '0 0 * * *'   # daily at 00:00 UTC
+  workflow_dispatch: {}
+  push:
+    branches:
+      - main
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+      - name: Install dependencies
+        run: python -m pip install --upgrade pip requests
+      - name: Run LeetCode README updater
+        env:
+          LEETCODE_USERNAME: Vishnukant-Bajpai
+          README_PATH: README.md
+        run: python scripts/update_leetcode_readme.py
+      - name: Commit and push changes if any
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if [ -n "$(git status --porcelain)" ]; then
+            git add README.md
+            git commit -m "chore: update LeetCode roadmap"
+            git push origin HEAD:main
+          else
+            echo "No changes to commit"
